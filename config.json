@@ -1,0 +1,15 @@
+{
+  "debug": {
+    "enabled": true,
+    "level": "info"
+  },
+  "server": {
+    "max_clients": 10,
+    "plugins": [
+      "testplugin"
+    ],
+    "server_ip": "127.0.0.1",
+    "server_name": "Test server",
+    "server_port": 1234
+  }
+}

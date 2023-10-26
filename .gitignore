@@ -43,3 +43,13 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+# VSCode garbage
+.cache
+.vscode
+
+# Project garbage
+genconfig
+server
+*.a
+*.so
