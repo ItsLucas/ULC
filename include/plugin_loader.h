@@ -1,10 +1,11 @@
 #pragma once
+#include "cmd.h"
 #include "config.h"
 #include "plugin_base.h"
 #include <list>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace ULC {
 /* Singleton plugin loader. */
@@ -17,7 +18,7 @@ public:
   bool load(const std::string &plugin_name);
   bool unload(const std::string &plugin_name);
   bool reload(const std::string &plugin_name);
-  bool do_command(const std::string &command);
+  std::unique_ptr<ULC::cmd> by_name(const std::string &command);
   /* Getters */
   std::shared_ptr<plugin_base> plugin(const std::string &plugin_name);
 

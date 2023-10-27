@@ -2,6 +2,7 @@
 #include "config.h"
 #include "log.h"
 #include <list>
+#include "cmd.h"
 
 namespace ULC {
 
@@ -23,12 +24,11 @@ public:
   virtual ~plugin_base() {}
   virtual bool load() = 0;
   virtual bool unload() = 0;
-  virtual bool do_command(const std::string &command) = 0;
+  virtual std::unique_ptr<ULC::cmd> by_name(const std::string &command) = 0;
   std::string name() { return m_name; }
   std::string version() { return m_version; }
   std::string description() { return m_description; }
   std::list<std::string> commands() { return m_commands; }
-
 protected:
   std::string m_name;
   std::string m_version;

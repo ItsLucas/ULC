@@ -7,6 +7,28 @@ extern "C" std::shared_ptr<ULC::plugin_base> init() {
 
 extern "C" void deinit() { return; }
 
+testcmd::testcmd() {
+    ULC::Logger &logger = ULC::Logger::getInstance();
+    logger.info("testcmd constructed", "testplugin.so");
+}
+
+testcmd::~testcmd() {
+    ULC::Logger &logger = ULC::Logger::getInstance();
+    logger.info("testcmd destructed", "testplugin.so");
+}
+
+ULC::retval testcmd::execute() {
+    ULC::retval ret;
+    nlohmann::json j;
+    ULC::Logger &logger = ULC::Logger::getInstance();
+    std::string arg1 = std::any_cast<std::string>(m_args[0]);
+    j["status"] = "OK";
+    j["message"] = "testcmd executed";
+    j["retrieved_args"] = arg1;
+    logger.info("testcmd executed", "testplugin.so");
+    return ret.ok().message("testcmd executed").data(j);
+}
+
 testplugin::testplugin() {
     ULC::Logger &logger = ULC::Logger::getInstance();
     logger.info("testplugin constructed", "testplugin.so");
@@ -37,8 +59,9 @@ bool testplugin::unload() {
     return true;
 }
 
-bool testplugin::do_command(const std::string &command) {
-    ULC::Logger &logger = ULC::Logger::getInstance();
-    logger.info("testplugin do_command: " + command, "testplugin.so");
-    return true;
+std::unique_ptr<ULC::cmd> testplugin::by_name(const std::string &command) {
+    if(command == "test") {
+        return std::make_unique<testcmd>();
+    }
+    return nullptr;
 }

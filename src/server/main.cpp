@@ -27,8 +27,11 @@ int main() {
     plugin_loader.load(plugin);
   }
 
-  plugin_loader.do_command("test");
-
+  auto cmd = plugin_loader.by_name("test");
+  cmd->add_arg(std::string("this is an arg"));
+  auto ret = cmd->execute();
+  logger.info("Command returned: " + ret.to_string());
+  cmd.reset(nullptr);
   plugin_loader.unload("testplugin");
   return 0;
 }

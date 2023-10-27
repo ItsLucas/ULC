@@ -80,14 +80,21 @@ bool PluginLoader::reload(const std::string &plugin_name) {
   return unload(plugin_name) && load(plugin_name);
 }
 
-bool PluginLoader::do_command(const std::string &command) {
+std::unique_ptr<ULC::cmd> PluginLoader::by_name(const std::string &command) {
   /* Dispatch command to plugin */
   if (m_commands_map.find(command) == m_commands_map.end()) {
     Logger::getInstance().error("Command " + command + " not found.",
                                 "ULC::PluginLoader");
-    return false;
+    return nullptr;
   }
-  return m_commands_map[command]->do_command(command);
+
+  auto cmd = m_commands_map[command]->by_name(command);
+  if (cmd == nullptr) {
+    Logger::getInstance().error("Command " + command + " not found.",
+                                "ULC::PluginLoader");
+    return nullptr;
+  }
+  return cmd;
 }
 
 std::shared_ptr<plugin_base>
