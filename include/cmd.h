@@ -17,29 +17,36 @@ class retval {
   bool m_success;
   std::string m_message;
   json m_data;
+
 public:
+  retval() = default;
+
   retval(bool success, const std::string &message, const json &data)
       : m_success(success), m_message(message), m_data(data) {}
-  bool success() { return m_success; }
+
+  bool ok() { return m_success; }
+
+  bool fail() { return !m_success; }
+
+  retval &status(bool success) {
+    m_success = success;
+    return *this;
+  }
+
   std::string message() { return m_message; }
-  json data() { return m_data; }
-  retval& ok() {
-    m_success = true;
-    return *this;
-  }
-  retval& fail() {
-    m_success = false;
-    return *this;
-  }
-  retval& message(const std::string &message) {
+  
+  retval &message(const std::string &message) {
     m_message = message;
     return *this;
   }
-  retval& data(const json &data) {
+
+  json data() { return m_data; }
+
+  retval &data(const json &data) {
     m_data = data;
     return *this;
   }
-  retval() = default;
+  
   std::string to_string() {
     std::stringstream ss;
     ss << "success: " << m_success << ", message: " << m_message

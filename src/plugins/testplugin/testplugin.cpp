@@ -26,7 +26,7 @@ ULC::retval testcmd::execute() {
     j["message"] = "testcmd executed";
     j["retrieved_args"] = arg1;
     logger.info("testcmd executed", "testplugin.so");
-    return ret.ok().message("testcmd executed").data(j);
+    return ret.status(true).message("testcmd executed").data(j);
 }
 
 testplugin::testplugin() {
