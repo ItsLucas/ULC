@@ -12,7 +12,7 @@ public:
   void flush();
   /* Getters */
   std::string server_name() { return m_server_name; }
-  std::string server_ip() { return m_server_ip; }
+  std::string &server_ip() { return m_server_ip; }
   int server_port() { return m_server_port; }
   int max_clients() { return m_max_clients; }
   std::list<std::string> plugins() { return m_plugins; }

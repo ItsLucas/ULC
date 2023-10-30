@@ -15,6 +15,8 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:nlohmann/json@3.10.5")
 CPMAddPackage("gh:gabime/spdlog@1.12.0")
+CPMAddPackage("gh:CrowCpp/Crow@1.0+5")
+CPMAddPackage("gh:daniele77/cli@2.1.0")
 
 # add include/ directory
 include_directories(include)
@@ -25,7 +27,7 @@ set(CMAKE_CXX_STANDARD 17)
 # add all files under src/common as common.a
 file(GLOB_RECURSE COMMON_SOURCES src/common/*.cpp)
 add_library(common STATIC ${COMMON_SOURCES})
-target_link_libraries(common pthread nlohmann_json::nlohmann_json spdlog::spdlog)
+target_link_libraries(common pthread nlohmann_json::nlohmann_json spdlog::spdlog Crow::Crow cli::cli)
 # link common.a to all executables
 link_libraries(common)
 
