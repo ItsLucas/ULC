@@ -1,16 +1,21 @@
 #include "server.h"
 #include "log.h"
+#include "plugin_loader.h"
 
 namespace ULC {
 
 Server::Server(std::string &ip, int port) {
   Logger::getInstance().info("Starting Server...", "server");
   setup_routes();
+  PluginLoader::getInstance().setup_routes_for_crow(m_app);
   m_app.bindaddr(ip).port(port).multithreaded().run_async();
   Logger::getInstance().info("Server started", "server");
 }
 
-Server::~Server() { m_app.stop(); }
+Server::~Server() {
+  Logger::getInstance().info("Stopping Server...", "server");
+  m_app.stop();
+}
 
 void Server::restart(std::string &ip, int port) {
   m_app.stop();

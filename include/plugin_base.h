@@ -1,10 +1,14 @@
 #pragma once
+#include "cmd.h"
 #include "config.h"
 #include "log.h"
+#include <cli/cli.h>
+#include <crow/app.h>
 #include <list>
-#include "cmd.h"
 
 namespace ULC {
+
+enum plugin_type { PLUGIN_TYPE_CROW = 1, PLUGIN_TYPE_CLI = 2 };
 
 class plugin_base {
   /*
@@ -29,6 +33,14 @@ public:
   std::string version() { return m_version; }
   std::string description() { return m_description; }
   std::list<std::string> commands() { return m_commands; }
+  virtual bool setup_routes_for_crow(crow::SimpleApp &app) { return true; }
+  virtual bool setup_routes_for_cli(std::unique_ptr<cli::Menu> &rootMenu) {
+    return true;
+  }
+  bool crow_plugin() { return plugin_type() & PLUGIN_TYPE_CROW; }
+  bool cli_plugin() { return plugin_type() & PLUGIN_TYPE_CLI; }
+  virtual int plugin_type() = 0;
+
 protected:
   std::string m_name;
   std::string m_version;

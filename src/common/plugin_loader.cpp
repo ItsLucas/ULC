@@ -117,4 +117,17 @@ void PluginLoader::erase_plugin(const std::string &plugin_name) {
     }
   }
 }
+
+bool PluginLoader::setup_routes_for_crow(crow::SimpleApp &app) {
+  for (auto plugin : m_plugins) {
+    if (plugin->crow_plugin()) {
+      if(!plugin->setup_routes_for_crow(app)) {
+        Logger::getInstance().error("Failed to setup routes for plugin " + plugin->name() + ".",
+                                    "ULC::PluginLoader");
+        return false;
+      }
+    }
+  }
+  return true;
+}
 } // namespace ULC

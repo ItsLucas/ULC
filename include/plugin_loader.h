@@ -2,6 +2,8 @@
 #include "cmd.h"
 #include "config.h"
 #include "plugin_base.h"
+#include <cli/cli.h>
+#include <crow/app.h>
 #include <list>
 #include <map>
 #include <string>
@@ -21,7 +23,7 @@ public:
   std::unique_ptr<ULC::cmd> by_name(const std::string &command);
   /* Getters */
   std::shared_ptr<plugin_base> plugin(const std::string &plugin_name);
-
+  bool setup_routes_for_crow(crow::SimpleApp &app);
 private:
   PluginLoader() = default;
   std::vector<std::shared_ptr<plugin_base>> m_plugins;

@@ -4,6 +4,7 @@
 #include "plugin_loader.h"
 #include "server.h"
 #include "server_config.h"
+#include "ulc_thd_manager.h"
 #include <cli/cli.h>
 #include <cli/clifilesession.h>
 #include <fstream>
@@ -12,6 +13,41 @@
 
 std::unique_ptr<ULC::Server> server_ptr = nullptr;
 std::thread server_thread;
+
+void cleanup() {
+  ULC::PluginLoader &plugin_loader = ULC::PluginLoader::getInstance();
+  auto &logger = ULC::Logger::getInstance();
+  plugin_loader.unload("testplugin");
+  logger.info("Exiting");
+  server_ptr.reset(nullptr);
+  exit(0);
+}
+
+using arglist = std::vector<std::string>;
+
+void ulc_execute_command(std::ostream &os, arglist &args) {
+  ULC::PluginLoader &plugin_loader = ULC::PluginLoader::getInstance();
+  auto &logger = ULC::Logger::getInstance();
+  if (args.empty()) {
+    os << "Usage: exec <cmd> <args>...\n";
+    return;
+  }
+  auto cmd = plugin_loader.by_name(args[0]);
+  if (cmd == nullptr) {
+    os << "Command not found: " << args[0] << "\n";
+    return;
+  }
+  /* Pass remaining args into cmd */
+  if (args.size() > 1){
+    for (auto i = 1; i < args.size(); i++) {
+      cmd->add_arg(args[i]);
+    }
+  }
+  auto ret = cmd->execute();
+  logger.info("Command returned: " + ret.to_string());
+  cmd.reset(nullptr);
+}
+
 int main() {
   spdlog::set_level(spdlog::level::debug);
   ULC::Config &config = ULC::Config::getInstance();
@@ -33,12 +69,6 @@ int main() {
     plugin_loader.load(plugin);
   }
 
-  auto cmd = plugin_loader.by_name("test");
-  cmd->add_arg(std::string("this is an arg"));
-  auto ret = cmd->execute();
-  logger.info("Command returned: " + ret.to_string());
-  cmd.reset(nullptr);
-  plugin_loader.unload("testplugin");
   server_thread = std::thread([&]() {
     if (server_ptr == nullptr) {
       server_ptr = std::make_unique<ULC::Server>(server_config.server_ip(),
@@ -48,17 +78,16 @@ int main() {
   server_thread.detach();
   auto rootMenu = std::make_unique<cli::Menu>("cli");
   rootMenu->Insert(
-      "hello", [](std::ostream &out) { out << "Hello, world\n"; },
-      "Print hello world");
-  logger.info("test");
+      "exec",
+      [](std::ostream &out, arglist args) { ulc_execute_command(out, args); },
+      "Usage: exec <cmd> <args>...");
   auto m_cli = cli::Cli(std::move(rootMenu));
   // global exit action
-  m_cli.ExitAction([](auto &out) {
-    out << "Goodbye and thanks for all the fish.\n";
-    server_ptr.reset(nullptr);
-  });
+  m_cli.ExitAction(
+      [](auto &out) { out << "Goodbye and thanks for all the fish.\n"; });
 
   cli::CliFileSession input(m_cli);
   input.Start();
+  cleanup();
   return 0;
 }
