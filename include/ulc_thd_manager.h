@@ -8,21 +8,22 @@
 namespace ULC {
 class Global_THD_Manager {
 public:
-  Global_THD_Manager &instance() {
+  static Global_THD_Manager *instance() {
     static Global_THD_Manager instance;
-    return instance;
+    return &instance;
   }
 
-  void create(std::string &name) {
-    m_thd_map[name] = std::make_unique<ULC::THD>(name);
+  void create(std::string &name, std::string &ip, int port) {
+    m_thd_map[name] = std::make_unique<ULC::THD>(name, ip, port);
   }
+
+  void remove(std::string &name) { m_thd_map.erase(name); }
 
   auto& by_name(std::string &name) { return m_thd_map[name]; }
   
 private:
     Global_THD_Manager();
     ~Global_THD_Manager();
-    Global_THD_Manager(const Global_THD_Manager &) = delete;
     Global_THD_Manager &operator=(const Global_THD_Manager &) = delete;
     Global_THD_Manager(Global_THD_Manager &&) = delete;
     Global_THD_Manager &operator=(Global_THD_Manager &&) = delete;

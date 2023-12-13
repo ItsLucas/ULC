@@ -2,12 +2,20 @@
 #include "log.h"
 #include "plugin_loader.h"
 
-namespace ULC {
+/* Function pointer for setup_routes_extra */
+setup_routes_extra_t setup_routes_extra = nullptr;
 
+namespace ULC {
 Server::Server(std::string &ip, int port) {
   Logger::getInstance().info("Starting Server...", "server");
   setup_routes();
+  Logger::getInstance().info("Setting up routes for plugins...", "server");
   PluginLoader::getInstance().setup_routes_for_crow(m_app);
+  /* Setup extra routes */
+  if (setup_routes_extra != nullptr) {
+    Logger::getInstance().info("Setting up extra routes...", "server");
+    setup_routes_extra(m_app);
+  }
   m_app.bindaddr(ip).port(port).multithreaded().run_async();
   Logger::getInstance().info("Server started", "server");
 }

@@ -23,6 +23,27 @@ void cleanup() {
   exit(0);
 }
 
+void setup_routes_extra_server(crow::SimpleApp &app) {
+  CROW_ROUTE(app, "/server/connect")
+      .methods("POST"_method)([](const crow::request &req) {
+        auto x = crow::json::load(req.body);
+        if (!x)
+          return crow::response(400);
+        auto name = std::string(x["name"].s().begin(), x["name"].s().end());
+        auto ip = std::string(x["ip"].s().begin(), x["ip"].s().end());
+        auto port = x["port"].i();
+        auto mgr = ULC::Global_THD_Manager::instance();
+        mgr->create(name, ip, port);
+        return crow::response(200);
+      });
+  CROW_ROUTE(app, "/server/<string>/disconnect")
+      .methods("POST"_method)([](const crow::request &req, std::string name) {
+        auto mgr = ULC::Global_THD_Manager::instance();
+        mgr->remove(name);
+        return crow::response(200);
+      });
+}
+
 using arglist = std::vector<std::string>;
 
 void ulc_execute_command(std::ostream &os, arglist &args) {
@@ -50,6 +71,8 @@ void ulc_execute_command(std::ostream &os, arglist &args) {
 
 int main() {
   spdlog::set_level(spdlog::level::debug);
+  setup_routes_extra = setup_routes_extra_server;
+
   ULC::Config &config = ULC::Config::getInstance();
   config.load("config.json");
 

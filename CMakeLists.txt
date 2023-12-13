@@ -39,4 +39,8 @@ file(GLOB_RECURSE SERVER_SOURCES src/server/*.cpp)
 # add executable
 add_executable(server ${SERVER_SOURCES})
 
+file(GLOB_RECURSE CLIENT_SOURCES src/client/*.cpp)
+# add executable
+add_executable(client ${CLIENT_SOURCES})
+
 add_executable(genconfig src/genconfig.cpp)
