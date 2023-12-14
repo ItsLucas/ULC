@@ -1,4 +1,5 @@
 #include "testplugin.h"
+#include "cmd.h"
 #include <memory>
 
 extern "C" std::shared_ptr<ULC::plugin_base> init() {
@@ -18,22 +19,14 @@ testcmd::~testcmd() {
 }
 
 ULC::retval testcmd::execute() {
-  ULC::retval ret;
-  nlohmann::json j;
   ULC::Logger &logger = ULC::Logger::getInstance();
   if (m_args.size() != 1) {
-    j["status"] = "ERROR";
-    j["message"] = "testcmd error";
-    j["retrieved_args"] = "null";
     logger.error("testcmd requires 1 argument", "testplugin.so");
-    return ret.status(false).message("testcmd requires 1 argument").data(j);
+    return ULC::retval(false,"testcmd requires 1 argument", "null");
   }
   std::string arg1 = std::any_cast<std::string>(m_args[0]);
-  j["status"] = "OK";
-  j["message"] = "testcmd executed";
-  j["retrieved_args"] = arg1;
   logger.info("testcmd executed", "testplugin.so");
-  return ret.status(true).message("testcmd executed").data(j);
+  return ULC::retval(true,"testcmd executed", arg1);
 }
 
 testplugin::testplugin() {
@@ -74,6 +67,6 @@ std::unique_ptr<ULC::cmd> testplugin::by_name(const std::string &command) {
 }
 
 bool testplugin::setup_routes_for_crow(crow::SimpleApp &app) {
-  CROW_ROUTE(app, "/test")([]() { return "Hello testplugin"; });
+  CROW_ROUTE(app, PLUGIN_ROUTE(m_name, "test"))([]() { return "Hello testplugin"; });
   return true;
 }

@@ -10,6 +10,7 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#include "request.h"
 
 std::unique_ptr<ULC::Server> server_ptr = nullptr;
 std::thread server_thread;
