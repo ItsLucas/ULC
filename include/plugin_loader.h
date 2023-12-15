@@ -17,6 +17,7 @@ public:
     static PluginLoader instance;
     return instance;
   }
+  using cmdinfo = std::pair<std::string, std::string>;
   bool load(const std::string &plugin_name);
   bool unload(const std::string &plugin_name);
   bool reload(const std::string &plugin_name);
@@ -24,6 +25,7 @@ public:
   /* Getters */
   std::shared_ptr<plugin_base> plugin(const std::string &plugin_name);
   bool setup_routes_for_crow(crow::SimpleApp &app);
+  std::list<cmdinfo> get_all_commands();
 private:
   PluginLoader() = default;
   std::vector<std::shared_ptr<plugin_base>> m_plugins;

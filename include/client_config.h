@@ -14,6 +14,8 @@ public:
   std::string client_name() { return m_client_name; }
   std::string &client_ip() { return m_client_ip; }
   int client_port() { return m_client_port; }
+  std::string &server_ip() { return m_server_ip; }
+  int server_port() { return m_server_port; }
   std::list<std::string> plugins() { return m_plugins; }
 
 private:
@@ -32,6 +34,8 @@ private:
   std::string m_client_name;
   std::string m_client_ip;
   int m_client_port;
+  std::string m_server_ip;
+  int m_server_port;
   std::list<std::string> m_plugins;
 };
 } // namespace ULC

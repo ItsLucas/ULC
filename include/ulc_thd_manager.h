@@ -6,6 +6,25 @@
 #include <map>
 
 namespace ULC {
+
+class Do_THD_Impl {
+public:
+  virtual ~Do_THD_Impl() = default;
+  virtual void operator()(std::unique_ptr<ULC::THD> &thd) = 0;
+};
+
+class Do_THD {
+public:
+  explicit Do_THD(Do_THD_Impl *func) : func_(func) {}
+  void
+  operator()(std::pair<const std::string, std::unique_ptr<ULC::THD>> &thd) {
+    (*func_)(thd.second);
+  }
+
+private:
+  Do_THD_Impl *func_;
+};
+
 class Global_THD_Manager {
 public:
   static Global_THD_Manager *instance() {
@@ -20,7 +39,12 @@ public:
   void remove(std::string &name) { m_thd_map.erase(name); }
 
   auto& by_name(std::string &name) { return m_thd_map[name]; }
-  
+
+  void do_for_all_thd(Do_THD_Impl *func) {
+    Do_THD doit(func);
+    std::for_each(m_thd_map.begin(), m_thd_map.end(), doit);
+  }
+
 private:
     Global_THD_Manager();
     ~Global_THD_Manager();

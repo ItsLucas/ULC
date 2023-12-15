@@ -6,7 +6,6 @@
 #include <crow/app.h>
 #include <list>
 
-#define PLUGIN_ROUTE(name, cmd) std::string("/" + name + "/" + cmd).c_str()
 namespace ULC {
 
 enum plugin_type { PLUGIN_TYPE_CROW = 1, PLUGIN_TYPE_CLI = 2 };

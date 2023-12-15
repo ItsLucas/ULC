@@ -100,5 +100,26 @@ protected:
   std::vector<std::any> m_args;
 };
 
+class remote_arg {
+public:
+  remote_arg() {}
+  remote_arg(const std::string &json) {
+    auto j = json::parse(json);
+    for (auto x : j["args"]) {
+      m_args.push_back(x);
+    }
+  }
+  ~remote_arg() {}
+  std::string to_string() {
+    nlohmann::json j;
+    j["args"] = m_args;
+    return j.dump();
+  }
+  void push(std::string &arg) { m_args.push_back(arg); }
+  std::vector<std::string> &args() { return m_args; }
+private:
+  std::vector<std::string> m_args;
+};
+
 } // namespace ULC
 #endif

@@ -17,7 +17,10 @@
       "testplugin"
     ],
     "client_ip": "127.0.0.1",
-    "client_name": "Test client",
-    "client_port": 2345
+    "client_name": "Testclient",
+    "client_port": 2345,
+    "server_ip": "127.0.0.1",
+    "server_name": "Test server",
+    "server_port": 12345
   }
 }

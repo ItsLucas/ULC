@@ -2,11 +2,22 @@
 #include "server_config.h"
 #include <dlfcn.h>
 
+#include <string>
+
+inline std::string composePluginPath(const std::string &plugin_name) {
+  std::string plugin_path;
+#ifdef __APPLE__
+  plugin_path = "lib" + plugin_name + ".dylib";
+#else
+  plugin_path = "lib" + plugin_name + ".so";
+#endif
+  return plugin_path;
+}
 namespace ULC {
 bool PluginLoader::load(const std::string &plugin_name) {
   Config &config = Config::getInstance();
   /* Load plugin_name.so and call init() function */
-  std::string plugin_path = "lib" + plugin_name + ".so";
+  std::string plugin_path = composePluginPath(plugin_name);
   void *plugin_handle = dlopen(plugin_path.c_str(), RTLD_LAZY);
   if (!plugin_handle) {
     Logger::getInstance().error("Failed to load plugin " + plugin_name + ": " +
@@ -31,7 +42,8 @@ bool PluginLoader::load(const std::string &plugin_name) {
     return false;
   }
   if (!plugin->load()) {
-    Logger::getInstance().error("Failed to load plugin " + plugin_name + "during post initialization"
+    Logger::getInstance().error("Failed to load plugin " + plugin_name +
+                                "during post initialization"
                                 "ULC::PluginLoader");
     return false;
   }
@@ -51,9 +63,9 @@ bool PluginLoader::unload(const std::string &plugin_name) {
   for (auto cmd : plugin1->commands()) {
     /* Erase all commands */
     m_commands_map.erase(cmd);
-    }
+  }
   /* Unload plugin_name.so and call deinit() function */
-  std::string plugin_path = "lib" + plugin_name + ".so";
+  std::string plugin_path = composePluginPath(plugin_name);
   void *plugin_handle = dlopen(plugin_path.c_str(), RTLD_LAZY);
   if (!plugin_handle) {
     Logger::getInstance().error("Failed to unload plugin " + plugin_name +
@@ -121,8 +133,9 @@ void PluginLoader::erase_plugin(const std::string &plugin_name) {
 bool PluginLoader::setup_routes_for_crow(crow::SimpleApp &app) {
   for (auto plugin : m_plugins) {
     if (plugin->crow_plugin()) {
-      if(!plugin->setup_routes_for_crow(app)) {
-        Logger::getInstance().error("Failed to setup routes for plugin " + plugin->name() + ".",
+      if (!plugin->setup_routes_for_crow(app)) {
+        Logger::getInstance().error("Failed to setup routes for plugin " +
+                                        plugin->name() + ".",
                                     "ULC::PluginLoader");
         return false;
       }
@@ -130,4 +143,15 @@ bool PluginLoader::setup_routes_for_crow(crow::SimpleApp &app) {
   }
   return true;
 }
+
+std::list<PluginLoader::cmdinfo> PluginLoader::get_all_commands() {
+  std::list<cmdinfo> commands;
+  for (auto plugin : m_plugins) {
+    for (auto cmd : plugin->commands()) {
+      commands.push_back(std::make_pair(plugin->name(), cmd));
+    }
+  }
+  return commands;
+}
+
 } // namespace ULC

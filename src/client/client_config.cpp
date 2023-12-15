@@ -5,6 +5,8 @@ void ClientConfig::loadall() {
   m_client_name = m_json["client_name"];
   m_client_ip = m_json["client_ip"];
   m_client_port = m_json["client_port"];
+  m_server_ip = m_json["server_ip"];
+  m_server_port = m_json["server_port"];
   for (auto &plugin : m_json["plugins"]) {
     m_plugins.push_back(plugin);
   }

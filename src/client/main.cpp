@@ -2,6 +2,7 @@
 #include "config.h"
 #include "log.h"
 #include "plugin_loader.h"
+#include "request.h"
 #include "server.h"
 #include "client_config.h"
 #include "ulc_thd_manager.h"
@@ -9,6 +10,7 @@
 #include <cli/clifilesession.h>
 #include <fstream>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <thread>
 
 std::unique_ptr<ULC::Server> server_ptr = nullptr;
@@ -21,6 +23,21 @@ void cleanup() {
   logger.info("Exiting");
   server_ptr.reset(nullptr);
   exit(0);
+}
+
+void setup_routes_extra_client(crow::SimpleApp &app) {
+  CROW_ROUTE(app, "/client/cmdlist")
+  ([]() {
+    auto clist = ULC::PluginLoader::getInstance().get_all_commands();
+    nlohmann::json j;
+    /* Make an array and put pairs inside */
+    j["commands"] = nlohmann::json::array();
+    for (auto &cmd : clist) {
+      j["commands"].push_back(
+          {{"plugin_name", cmd.first}, {"cmd_name", cmd.second}});
+    }
+    return j.dump();
+  });
 }
 
 using arglist = std::vector<std::string>;
@@ -50,11 +67,12 @@ void ulc_execute_command(std::ostream &os, arglist &args) {
 
 int main() {
   spdlog::set_level(spdlog::level::debug);
+  setup_routes_extra = setup_routes_extra_client;
   ULC::Config &config = ULC::Config::getInstance();
   config.load("config.json");
 
   auto &logger = ULC::Logger::getInstance();
-  logger.info("Loading server config");
+  logger.info("Loading client config");
 
   auto &client_config = ULC::ClientConfig::getInstance();
   logger.info("Client name: " + client_config.client_name());
@@ -75,6 +93,20 @@ int main() {
     }
   });
   server_thread.detach();
+
+  /* Get server ip port */
+  auto server_ip = client_config.server_ip();
+  auto server_port = client_config.server_port();
+  /* Connect by sending POST to /server/connect with client's name, ip, port */
+  {
+    ULC::Request req(server_ip, server_port, "/server/connect");
+    nlohmann::json j;
+    j["name"] = client_config.client_name();
+    j["ip"] = client_config.client_ip();
+    j["port"] = client_config.client_port();
+    auto res = req.post(j.dump());
+    logger.info("Server responded: " + res);
+  }
   auto rootMenu = std::make_unique<cli::Menu>("cli");
   rootMenu->Insert(
       "exec",
@@ -87,6 +119,16 @@ int main() {
 
   cli::CliFileSession input(m_cli);
   input.Start();
+  /* Disconnect by sending POST to /server/connect with client's name, ip, port */
+  {
+    ULC::Request req(server_ip, server_port, "/server/disconnect");
+    nlohmann::json j;
+    j["name"] = client_config.client_name();
+    j["ip"] = client_config.client_ip();
+    j["port"] = client_config.client_port();
+    auto res = req.post(j.dump());
+    logger.info("Server responded: " + res);
+  }
   cleanup();
   return 0;
 }

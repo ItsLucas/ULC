@@ -1,7 +1,9 @@
 
+#include "cmd.h"
 #include "config.h"
 #include "log.h"
 #include "plugin_loader.h"
+#include "request.h"
 #include "server.h"
 #include "server_config.h"
 #include "ulc_thd_manager.h"
@@ -10,7 +12,6 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
-#include "request.h"
 
 std::unique_ptr<ULC::Server> server_ptr = nullptr;
 std::thread server_thread;
@@ -35,14 +36,28 @@ void setup_routes_extra_server(crow::SimpleApp &app) {
         auto port = x["port"].i();
         auto mgr = ULC::Global_THD_Manager::instance();
         mgr->create(name, ip, port);
+        auto thd = mgr->by_name(name).get();
+        /* Send a GET to /client/cmdlist */
+        ULC::Request req2(ip, port, "/client/cmdlist");
+        auto resp = req2.get();
+        nlohmann::json j = nlohmann::json::parse(resp);
+        /*
+        {"commands":[{"cmd_name":"test","plugin_name":"testplugin"},{"cmd_name":"test2","plugin_name":"testplugin"}]}
+        */
+        for (auto &cmd : j["commands"]) {
+          auto plugin_name = cmd["plugin_name"].get<std::string>();
+          auto cmd_name = cmd["cmd_name"].get<std::string>();
+          thd->add_remote_command(plugin_name, cmd_name);
+          ULC::Logger::getInstance().info("Added remote command: " + cmd_name);
+        }
         return crow::response(200);
       });
   CROW_ROUTE(app, "/server/<string>/disconnect")
-      .methods("POST"_method)([](const crow::request &req, std::string name) {
-        auto mgr = ULC::Global_THD_Manager::instance();
-        mgr->remove(name);
-        return crow::response(200);
-      });
+  ([](std::string name) {
+    auto mgr = ULC::Global_THD_Manager::instance();
+    mgr->remove(name);
+    return crow::response(200);
+  });
 }
 
 using arglist = std::vector<std::string>;
@@ -60,7 +75,7 @@ void ulc_execute_command(std::ostream &os, arglist &args) {
     return;
   }
   /* Pass remaining args into cmd */
-  if (args.size() > 1){
+  if (args.size() > 1) {
     for (auto i = 1; i < args.size(); i++) {
       cmd->add_arg(args[i]);
     }
@@ -68,6 +83,60 @@ void ulc_execute_command(std::ostream &os, arglist &args) {
   auto ret = cmd->execute();
   logger.info("Command returned: " + ret.to_string());
   cmd.reset(nullptr);
+}
+
+void ulc_execute_remote_command(std::ostream &os, arglist &args) {
+  if (args.size() < 2) {
+    os << "Usage: execremote <client> <cmd> <args>...\n";
+    return;
+  }
+
+  /* Find client */
+  auto client = ULC::Global_THD_Manager::instance()->by_name(args[0]).get();
+
+  if(client == nullptr) {
+    os << "Client not found: " << args[0] << "\n";
+    return;
+  }
+  /* Check if command exist */
+  auto cmd = client->get_remote_command(args[1]);
+  if (cmd.first == "null") {
+    os << "Command not found: " << args[1] << "\n";
+    return;
+  }
+  /* Path is /<plugin_name>/<command_name> */
+  std::string path = "/" + cmd.first + "/" + cmd.second;
+  /* Prepare args */
+  ULC::remote_arg rarg;
+
+  /* Pass remaining args into cmd */
+  if (args.size() > 2) {
+    for (auto i = 2; i < args.size(); i++) {
+      rarg.push(args[i]);
+    }
+  }
+
+  /* Send */
+  ULC::Request req(client->ip(), client->port(), path);
+  auto result = req.post(rarg.to_string());
+  os << "Command returned: " << result << "\n";
+}
+
+class get_thd_info : public ULC::Do_THD_Impl {
+public:
+  get_thd_info(std::ostream &os) : m_os(os) {}
+  void operator()(std::unique_ptr<ULC::THD> &thd) override {
+    m_os << thd->name() << " " << thd->ip() << ":" << thd->port() << "\n";
+  }
+
+private:
+  std::ostream &m_os;
+};
+
+void ulc_list_clients(std::ostream &os, arglist &args) {
+  auto mgr = ULC::Global_THD_Manager::instance();
+  get_thd_info get_info(os);
+  mgr->do_for_all_thd(&get_info);
 }
 
 int main() {
@@ -105,6 +174,14 @@ int main() {
       "exec",
       [](std::ostream &out, arglist args) { ulc_execute_command(out, args); },
       "Usage: exec <cmd> <args>...");
+  rootMenu->Insert(
+      "execremote",
+      [](std::ostream &out, arglist args) { ulc_execute_remote_command(out, args); },
+      "Usage: execremote <client> <cmd> <args>...");
+  rootMenu->Insert(
+      "list",
+      [](std::ostream &out, arglist args) { ulc_list_clients(out, args); },
+      "Usage: list");
   auto m_cli = cli::Cli(std::move(rootMenu));
   // global exit action
   m_cli.ExitAction(
