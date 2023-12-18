@@ -98,14 +98,9 @@ void ulc_execute_remote_command(std::ostream &os, arglist &args) {
     os << "Client not found: " << args[0] << "\n";
     return;
   }
-  /* Check if command exist */
-  auto cmd = client->get_remote_command(args[1]);
-  if (cmd.first == "null") {
-    os << "Command not found: " << args[1] << "\n";
-    return;
-  }
+
   /* Path is /<plugin_name>/<command_name> */
-  std::string path = "/" + cmd.first + "/" + cmd.second;
+  std::string path = "/client/exec/" + args[1];
   /* Prepare args */
   ULC::remote_arg rarg;
 
@@ -125,7 +120,7 @@ void ulc_execute_remote_command(std::ostream &os, arglist &args) {
 class get_thd_info : public ULC::Do_THD_Impl {
 public:
   get_thd_info(std::ostream &os) : m_os(os) {}
-  void operator()(std::unique_ptr<ULC::THD> &thd) override {
+  void operator()(ULC::THD_ptr &thd) override {
     m_os << thd->name() << " " << thd->ip() << ":" << thd->port() << "\n";
   }
 

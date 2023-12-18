@@ -130,26 +130,13 @@ void PluginLoader::erase_plugin(const std::string &plugin_name) {
   }
 }
 
-bool PluginLoader::setup_routes_for_crow(crow::SimpleApp &app) {
-  for (auto plugin : m_plugins) {
-    if (plugin->crow_plugin()) {
-      if (!plugin->setup_routes_for_crow(app)) {
-        Logger::getInstance().error("Failed to setup routes for plugin " +
-                                        plugin->name() + ".",
-                                    "ULC::PluginLoader");
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 std::list<PluginLoader::cmdinfo> PluginLoader::get_all_commands() {
   std::list<cmdinfo> commands;
-  for (auto plugin : m_plugins) {
-    for (auto cmd : plugin->commands()) {
-      commands.push_back(std::make_pair(plugin->name(), cmd));
-    }
+  for (auto &cmd : m_commands_map) {
+    cmdinfo info;
+    info.first = cmd.second->name();
+    info.second = cmd.first;
+    commands.push_back(info);
   }
   return commands;
 }

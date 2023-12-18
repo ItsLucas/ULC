@@ -27,6 +27,14 @@ public:
                                      " success",
                                  "ULC::Request");
       return res->body;
+    } else if (res && res->status == 404) {
+      Logger::getInstance().logd(LogLevel::INFO,
+                                 "Request to " + m_ip + ":" +
+                                     std::to_string(m_port) + m_url +
+                                     " failed, 404",
+                                 "ULC::Request");
+      /* Return an empty json */
+      return "{}";
     } else {
       Logger::getInstance().logd(LogLevel::INFO,
                                  "Request to " + m_ip + ":" +
@@ -45,7 +53,16 @@ public:
                                      " success",
                                  "ULC::Request");
       return res->body;
-    } else {
+    } else if (res && res->status == 404) {
+      Logger::getInstance().logd(LogLevel::INFO,
+                                 "Request to " + m_ip + ":" +
+                                     std::to_string(m_port) + m_url +
+                                     " failed, 404",
+                                 "ULC::Request");
+      /* Return an empty json */
+      return "{}";
+    }
+    else {
       Logger::getInstance().logd(LogLevel::INFO,
                                  "Request to " + m_ip + ":" +
                                      std::to_string(m_port) + m_url + " failed",

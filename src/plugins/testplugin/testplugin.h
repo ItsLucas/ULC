@@ -12,7 +12,6 @@ public:
   ~testplugin();
   bool load() override;
   bool unload() override;
-  bool setup_routes_for_crow(crow::SimpleApp &app) override;
   int plugin_type() override { /* This is both cli and crow plugin */
     return ULC::PLUGIN_TYPE_CROW | ULC::PLUGIN_TYPE_CLI;
   }

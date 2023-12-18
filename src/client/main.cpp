@@ -1,4 +1,5 @@
 
+#include "cmd.h"
 #include "config.h"
 #include "log.h"
 #include "plugin_loader.h"
@@ -38,6 +39,19 @@ void setup_routes_extra_client(crow::SimpleApp &app) {
     }
     return j.dump();
   });
+  CROW_ROUTE(app, "/client/exec/<string>")
+      .methods("POST"_method)([](const crow::request &req, std::string cmd_name) {
+        ULC::remote_arg rarg(req.body);
+        auto cmd = ULC::PluginLoader::getInstance().by_name(cmd_name);
+        if (cmd == nullptr) {
+          return crow::response(404);
+        }
+        for(auto arg : rarg.args()) {
+          cmd->add_arg(arg);
+        }
+        auto ret = cmd->execute();
+        return crow::response(200, ret.to_string());
+      });
 }
 
 using arglist = std::vector<std::string>;

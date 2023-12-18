@@ -39,6 +39,7 @@ public:
   int port() { return m_port; }
   std::string uuid() { return m_uuid; }
 
+  std::mutex LOCK_thd_data;
 private:
   std::string m_name;
   std::string m_ip;

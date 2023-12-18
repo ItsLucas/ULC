@@ -9,8 +9,6 @@ namespace ULC {
 Server::Server(std::string &ip, int port) {
   Logger::getInstance().info("Starting Server...", "server");
   setup_routes();
-  Logger::getInstance().info("Setting up routes for plugins...", "server");
-  PluginLoader::getInstance().setup_routes_for_crow(m_app);
   /* Setup extra routes */
   if (setup_routes_extra != nullptr) {
     Logger::getInstance().info("Setting up extra routes...", "server");

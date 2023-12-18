@@ -33,7 +33,6 @@ public:
   std::string version() { return m_version; }
   std::string description() { return m_description; }
   std::list<std::string> commands() { return m_commands; }
-  virtual bool setup_routes_for_crow(crow::SimpleApp &app) { return true; }
   virtual bool setup_routes_for_cli(std::unique_ptr<cli::Menu> &rootMenu) {
     return true;
   }

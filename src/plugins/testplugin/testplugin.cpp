@@ -46,7 +46,6 @@ bool testplugin::load() {
   m_description = "testplugin description";
   m_version = "0.0.1";
   m_commands.push_back("test");
-  m_commands.push_back("test2");
   logger.info("commands: ", "testplugin.so");
   for (auto cmd : m_commands) {
     logger.info(cmd, "testplugin.so");
@@ -65,21 +64,4 @@ std::unique_ptr<ULC::cmd> testplugin::by_name(const std::string &command) {
     return std::make_unique<testcmd>();
   }
   return nullptr;
-}
-
-bool testplugin::setup_routes_for_crow(crow::SimpleApp &app) {
-  CROW_ROUTE(app, "/testplugin/test")
-      .methods("POST"_method)([](const crow::request &req) {
-        auto x = crow::json::load(req.body);
-        if (!x)
-          return crow::response(400);
-        ULC::remote_arg arg1(req.body);
-        auto cmd = std::make_unique<testcmd>();
-        for(auto arg : arg1.args()) {
-          cmd->add_arg(arg);
-        }
-        auto ret = cmd->execute();
-        return crow::response(200, ret.to_string());
-      });
-  return true;
 }

@@ -24,7 +24,6 @@ public:
   std::unique_ptr<ULC::cmd> by_name(const std::string &command);
   /* Getters */
   std::shared_ptr<plugin_base> plugin(const std::string &plugin_name);
-  bool setup_routes_for_crow(crow::SimpleApp &app);
   std::list<cmdinfo> get_all_commands();
 private:
   PluginLoader() = default;
